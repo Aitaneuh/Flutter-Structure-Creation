@@ -91,17 +91,37 @@ Set-Location src
 
 New-Item -Name $theme"_repository.dart" -ItemType file
 
+# Ajout du dossier et des fichiers mappers
 New-Item -Name mappers -ItemType Directory
 Set-Location mappers
 New-Item -Name "mappers.dart" -ItemType file
 Set-Location ..
 
+# Ajout du dossier et des fichiers models
 New-Item -Name models -ItemType Directory
 Set-Location models
 New-Item -Name "models.dart" -ItemType file
 Set-Location .. 
 
+# Ajout du dossier et des fichiers services
 New-Item -Name services -ItemType Directory
 Set-Location services
 New-Item -Name "services.dart" -ItemType file
 Set-Location ..
+
+# Créatio du dossier component_library
+mkdir component_library
+Set-Location component_library
+
+# Ajout du fichier analysis_options.yaml et pubspec.yaml
+@("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\component_library\analysis_options.yaml
+
+@("name: component_library", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0", "flutter:", "  uses-material-design: true") | Add-Content -Path $path\packages\component_library\pubspec.yaml
+
+# Ajout du dossier lib et du fichier component_library.dart
+mkdir lib
+Set-Location lib
+
+New-Item -Name component_library.dart -ItemType file
+
+mkdir src
