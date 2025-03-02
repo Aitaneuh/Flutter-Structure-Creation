@@ -109,7 +109,8 @@ Set-Location services
 New-Item -Name "services.dart" -ItemType file
 Set-Location ..
 
-# Créatio du dossier component_library
+# Création du dossier component_library
+set-location $path\packages
 mkdir component_library
 Set-Location component_library
 
@@ -125,3 +126,4 @@ Set-Location lib
 New-Item -Name component_library.dart -ItemType file
 
 mkdir src
+
