@@ -1,11 +1,13 @@
-
-#récupérer l'environnement de flutter (sdk)
-
 # Sélection du chemin
 # $path = Read-Host "Entrez le chemin de votre projet Flutter"
 $path = "C:/Test/test"
 Set-Location $path
 
+#récupérer l'environnement de flutter (sdk)
+$sdk = Get-Content "C:/Test/test/pubspec.yaml" | Where-Object { $_ -match "sdk" } | ForEach-Object { $_ -replace "^\t", "" }
+Write-Output $sdk
+
+# A supprimer
 Remove-Item -Recurse -Force "packages"
 
 # Sélection du nom du projet
@@ -18,14 +20,25 @@ $theme = 'voitures';
 # Sélection des entités du projet
 # $entities = @()
 
-# do {
-#     $entity = Read-Host "Entrez une entité (appuyez sur 'Entrée' pour terminer)"
-#     if ($entity -ne "") {
-#         $entities += $entity
-#     }
-# } while ($entity -ne "")
+$entities = @()
 
-$entities = @('modele', 'marque');
+$entitiesIndex = 0
+
+do {
+    $entity = Read-Host "Entrez une entité (appuyez sur 'Entrée' pour terminer)"
+    if ($entity -ne "") {
+        $entities += @{ Name = $entity; Properties = @() }
+        do {
+            $property = Read-Host "Entrez une propriété pour $entity (appuyez sur 'Entrée' pour terminer)"
+            if ($property -ne "") {
+                $entities[$entitiesIndex].Properties += $property
+            }
+        } while ($property -ne "")
+        $entitiesIndex++
+    }
+} while ($entity -ne "")
+
+Write-Output $entities
 
 # Suppression du dossier test
 if (Test-Path -Path "test") {
