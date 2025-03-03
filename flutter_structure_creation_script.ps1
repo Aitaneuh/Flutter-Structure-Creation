@@ -73,14 +73,37 @@ New-Item -Name domain_entities.dart -ItemType file
 mkdir src
 Set-Location src
 
-# Création des entités - problèmes ici
 foreach ($entity in $entities) {
     mkdir $entity
     Set-Location $entity
 
     New-Item -Name "$entity.dart" -ItemType file
 
-    @("class $entity extands Equatable {", "  const $entity({", " })", "@override", "List<Object?> get props => [];", "}") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+    @("class $entity extands Equatable {", "  const $entity({") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+
+    foreach($property in $entity.Properties) {
+        @("    required this.$property,") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+    }
+
+    @(" })") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+
+    foreach($property in $entity.Properties) {
+        @("  final xxx $property;") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+    }
+
+    @(, "@override") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+
+    $dataLine = ""
+
+    foreach($property in $entity.Properties) {
+        if ($property -eq $entity.Properties[-1]) {
+            $dataLine += "$property"
+        } else {
+            $dataLine += "$property, "
+        }
+    }
+
+    @(, "List<Object?> get props => [$dataLine];", "}") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
 
     Set-Location ..
 
