@@ -1,21 +1,25 @@
-# Sélection du chemin
-# $path = Read-Host "Entrez le chemin de votre projet Flutter"
-$path = "C:/Test/test"
-Set-Location $path
+function Set-UpperCamelCase {
+    param([string]$inputString)
 
-#récupérer l'environnement de flutter (sdk)
-$sdk = Get-Content "C:/Test/test/pubspec.yaml" | Where-Object { $_ -match "sdk" } | ForEach-Object { $_ -replace "^\t", "" }
-Write-Output $sdk
+    return ($inputString -split '\s+|_|-' | ForEach-Object { $_.Substring(0, 1).ToUpper() + $_.Substring(1).ToLower() }) -join ''
+}
 
-# A supprimer
-Remove-Item -Recurse -Force "packages"
+# Demande du nom du projet
+$projectName = Read-Host "Entrez le nom de votre projet Flutter"
 
-# Sélection du nom du projet
-# $name = Read-Host "Entrez le nom de votre projet Flutter"
+Write-Host "Création du projet Flutter : $projectName"
+Set-Location $PSScriptRoot
+$platforms = "android,web"
+flutter create --platforms=$platforms $projectName
+Write-Host "Le projet $projectName a été créé avec succès."
+
+
+# Path mis sur le dossier actuel
+$path = "$PSScriptRoot\$projectName"
+
 
 # Sélection du thème principal
-# $theme = Read-Host "Entrez le thème principal de votre projet Flutter"
-$theme = 'voitures';
+$theme = Read-Host "Entrez le thème principal de votre projet Flutter"
 
 # Sélection des entités du projet
 # $entities = @()
@@ -40,10 +44,7 @@ do {
 
 Write-Output $entities
 
-# Suppression du dossier test
-if (Test-Path -Path "test") {
-    Remove-Item -Recurse -Force "test"
-}
+Set-Location $path
 
 # Création du dossier packages
 mkdir packages
@@ -53,62 +54,48 @@ Set-Location packages
 mkdir domain_entities
 Set-Location domain_entities
 
+flutter pub add equatable
+
 # Création des fichiers analysis_options.yaml, pubspec.yaml
 New-Item -Name analysis_options.yaml -ItemType file
 @("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\domain_entities\analysis_options.yaml
 
 New-Item -Name pubspec.yaml -ItemType file
 
-@("name: domain_entities", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dev_dependencies:","  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\domain_entities\pubspec.yaml
-
-# Ajout de la dépendance equatable
-flutter pub add equatable
-
-# Création des dossier lib/src et du barrel
-mkdir lib
-Set-Location lib
-
-New-Item -Name domain_entities.dart -ItemType file
-
-mkdir src
-Set-Location src
+@("name: domain_entities", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  equatable: ^2.0.7", "", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\domain_entities\pubspec.yaml
 
 foreach ($entity in $entities) {
-    mkdir $entity
-    Set-Location $entity
+    $entityName = $entity.Name  # Récupération du nom de l'entité
+    $entityPath = "$path\packages\domain_entities\lib\src\$entityName"
 
-    New-Item -Name "$entity.dart" -ItemType file
+    $className = Set-UpperCamelCase $entityName
 
-    @("class $entity extands Equatable {", "  const $entity({") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+    mkdir $entityPath -Force  # -Force pour éviter les erreurs si le dossier existe
 
-    foreach($property in $entity.Properties) {
-        @("    required this.$property,") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+    $filePath = "$entityPath\$entityName.dart"
+    New-Item -Path $filePath -ItemType File -Force
+
+    @("import 'package:equatable/equatable.dart';", "", "class $className extends Equatable {", "  const $className({") | Set-Content -Path $filePath
+
+    foreach ($property in $entity.Properties) {
+        @("    required this.$property,") | Add-Content -Path $filePath
     }
 
-    @(" })") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+    @("  });", "") | Add-Content -Path $filePath
 
-    foreach($property in $entity.Properties) {
-        @("  final xxx $property;") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+    foreach ($property in $entity.Properties) {
+        @("  final String $property;") | Add-Content -Path $filePath  # Ici, j'ai mis String par défaut
     }
 
-    @(, "@override") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
+    @("", "  @override", "  List<Object?> get props => [") | Add-Content -Path $filePath
 
-    $dataLine = ""
+    $dataLine = ($entity.Properties -join ", ")  # Construit la liste des propriétés en une ligne
+    @("    $dataLine,", "  ];", "}") | Add-Content -Path $filePath
 
-    foreach($property in $entity.Properties) {
-        if ($property -eq $entity.Properties[-1]) {
-            $dataLine += "$property"
-        } else {
-            $dataLine += "$property, "
-        }
-    }
-
-    @(, "List<Object?> get props => [$dataLine];", "}") | Add-Content -Path $path\packages\domain_entities\lib\src\$entity\$entity.dart
-
-    Set-Location ..
-
-    @("export 'src/$entity/$entity.dart';") | Add-Content -Path $path\packages\domain_entities\lib\domain_entities.dart
+    # Mise à jour du barrel file
+    @("export 'src/$entityName/$entityName.dart';") | Add-Content -Path "$path\packages\domain_entities\lib\domain_entities.dart"
 }
+
 
 # Création du dossier repository
 $nameRepo = $theme + "_repository";
@@ -121,13 +108,13 @@ New-Item -Name analysis_options.yaml -ItemType file
 @("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\$nameRepo\analysis_options.yaml
 
 New-Item -Name pubspec.yaml -ItemType file
-@("name: $nameRepo", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:","  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\$nameRepo\pubspec.yaml
+@("name: $nameRepo", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\$nameRepo\pubspec.yaml
 
 # Ajout des dossiers lib/src et du barrel
 mkdir lib
 Set-Location lib
 
-@("export 'src/mappers.dart", "export 'src/models.dart", "export 'src/services.dart") | Add-Content -Path $path\packages\$nameRepo\lib\$nameRepo.dart
+@("export 'src/mappers/mappers.dart';", "export 'src/models/models.dart';", "export 'src/services/services.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\$nameRepo.dart
 
 mkdir src
 Set-Location src
@@ -162,6 +149,12 @@ Set-Location component_library
 
 @("name: component_library", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\component_library\pubspec.yaml
 
+# Création du projet Example
+flutter create --platforms=web example
+Set-Location example
+flutter pub add storybook_flutter
+Set-Location ..
+
 # Ajout du dossier lib et du fichier component_library.dart
 mkdir lib
 Set-Location lib
@@ -186,7 +179,7 @@ New-Item -Name analysis_options.yaml -ItemType file
 @("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\features\$nameList\analysis_options.yaml
 
 New-Item -Name pubspec.yaml -ItemType file
-@("name: $nameList", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "  flutter:", "", "  component_library:", "    path: ../../component_library", "  domain_entities:", "    path: ../../domain_entities", "  ${nameRepo}:", "    path: ../../${nameRepo}", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\features\$nameList\pubspec.yaml
+@("name: $nameList", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: ../../component_library", "  domain_entities:", "    path: ../../domain_entities", "  ${nameRepo}:", "    path: ../../${nameRepo}", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\features\$nameList\pubspec.yaml
 
 # Installation de la dépendance provider
 flutter pub add provider
@@ -212,7 +205,7 @@ New-Item -Name "${nameList}_provider.dart" -ItemType file
 @("part '${nameList}_state.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${nameList}_provider.dart
 
 New-Item -Name "providers.dart" -ItemType file
-@("export '${nameList}_provider.dart';", "export '${nameList}_state.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\providers.dart
+@("export '${nameList}_provider.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\providers.dart
 
 Set-Location ..
 
@@ -221,3 +214,6 @@ mkdir screens
 Set-Location screens
 
 New-Item -Name "screens.dart" -ItemType file
+
+Set-Location $path
+@("name: $projectName", "description: A new Flutter project.", "", "publish_to: 'none'", "", "version: 1.0.0+1", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: packages/component_library", "  domain_entities:", "    path: packages/domain_entities", "  ${nameList}:", "    path: packages/features/${nameList}", "  ${nameRepo}:", "    path: packages/${nameRepo}", "dev_dependencies:", "  flutter_test:", "    sdk: flutter", "  flutter_lints: ^4.0.0", "", "flutter:", "  uses-material-design: true") | Set-Content -Path $path\pubspec.yaml
