@@ -1,29 +1,27 @@
 function Set-UpperCamelCase {
     param([string]$inputString)
-
     return ($inputString -split '\s+|_|-' | ForEach-Object { $_.Substring(0, 1).ToUpper() + $_.Substring(1).ToLower() }) -join ''
 }
 
 # Demande du nom du projet
 $projectName = Read-Host "Entrez le nom de votre projet Flutter"
+$projectPath = Read-Host "Entrez le chemin du projet Flutter"
 
 Write-Host "Création du projet Flutter : $projectName"
-Set-Location $PSScriptRoot
+Set-Location $projectPath
 $platforms = "android,web"
 flutter create --platforms=$platforms $projectName
 Write-Host "Le projet $projectName a été créé avec succès."
 
 
 # Path mis sur le dossier actuel
-$path = "$PSScriptRoot\$projectName"
+$path = "$projectPath\$projectName"
 
 
 # Sélection du thème principal
 $theme = Read-Host "Entrez le thème principal de votre projet Flutter"
 
 # Sélection des entités du projet
-# $entities = @()
-
 $entities = @()
 
 $entitiesIndex = 0
@@ -70,7 +68,7 @@ foreach ($entity in $entities) {
 
     $className = Set-UpperCamelCase $entityName
 
-    mkdir $entityPath -Force  # -Force pour éviter les erreurs si le dossier existe
+    mkdir $entityPath -Force  # -Force pour éviter les erreurs si le dossier existe déjà
 
     $filePath = "$entityPath\$entityName.dart"
     New-Item -Path $filePath -ItemType File -Force
@@ -121,16 +119,63 @@ Set-Location src
 
 New-Item -Name $theme"_repository.dart" -ItemType file
 
-# Ajout du dossier et des fichiers mappers
-New-Item -Name mappers -ItemType Directory
-Set-Location mappers
-New-Item -Name "mappers.dart" -ItemType file
-Set-Location ..
-
 # Ajout du dossier et des fichiers models
 New-Item -Name models -ItemType Directory
 Set-Location models
 New-Item -Name "models.dart" -ItemType file
+
+# Fichiers model local
+foreach ($entity in $entities) {
+    $entityName = $entity.Name
+    New-Item -Name "${entityName}_local_file_model.dart" -ItemType file
+    @("export '${entityName}_local_file_model.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\models.dart
+    @("class ${entityName}LocalFileModel {", "  const ${entityName}LocalFileModel(") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+
+    foreach ($property in $entity.Properties) {
+        $thisProperty = "       this.${property},"
+        @($thisProperty) | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+    }
+    @("  );", "") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+    
+
+    @(" factory ${entityName}LocalFileModel.fromJson(Map<String, dynamic> json) {", "    return ${entityName}LocalFileModel(") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+
+    foreach ($property in $entity.Properties) {
+        $thisProperty = "   ${property}: json['${property}'],"
+        @($thisProperty) | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+    }
+
+    @("    );", "  }", "") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+
+    foreach ($property in $entity.Properties) {
+        $thisProperty = "   final String ${property};"
+        @($thisProperty) | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+    }
+
+    @("}") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+}
+
+Set-Location ..
+
+# Ajout du dossier et des fichiers mappers
+New-Item -Name mappers -ItemType Directory
+Set-Location mappers
+New-Item -Name "mappers.dart" -ItemType file
+
+foreach ($entity in $entities) {
+    $entityName = $entity.Name
+    New-Item -Name "${entityName}_local_file_model_to_domain.dart" -ItemType file
+    @("export '${entityName}_local_file_model_to_domain.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\mappers\mappers.dart
+
+    @("import 'package:domain_entities/domain_entities.dart';", "import 'package:$nameRepo/$nameRepo.dart';", "extension ${entityName}LocalFileModelToDomain on ${entityName}LocalFileModel {", "  ${entityName} toDomainEntity() {", "    return ${entityName}(") | Add-Content -Path $path\packages\$nameRepo\lib\src\mappers\${entityName}_local_file_model_to_domain.dart
+
+    foreach ($property in $entity.Properties) {
+        $thisProperty = "       ${property}: ${property},"
+        @($thisProperty) | Add-Content -Path $path\packages\$nameRepo\lib\src\mappers\${entityName}_local_file_model_to_domain.dart
+    }
+    @("    );", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\mappers\${entityName}_local_file_model_to_domain.dart
+}
+
 Set-Location .. 
 
 # Ajout du dossier et des fichiers services
