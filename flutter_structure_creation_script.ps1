@@ -20,6 +20,7 @@ $path = "$projectPath\$projectName"
 
 # Sélection du thème principal
 $theme = Read-Host "Entrez le thème principal de votre projet Flutter"
+$themeMaju = $theme.Substring(0, 1).ToUpper() + $theme.Substring(1).ToLower()
 
 # Sélection des entités du projet
 $entities = @()
@@ -226,6 +227,8 @@ New-Item -Name analysis_options.yaml -ItemType file
 New-Item -Name pubspec.yaml -ItemType file
 @("name: $nameList", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: ../../component_library", "  domain_entities:", "    path: ../../domain_entities", "  ${nameRepo}:", "    path: ../../${nameRepo}", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\features\$nameList\pubspec.yaml
 
+flutter pub add uuid
+
 # Installation de la dépendance provider
 flutter pub add provider
 
@@ -243,14 +246,19 @@ Set-Location src
 mkdir providers
 Set-Location providers
 
-New-Item -Name "${nameList}_state.dart" -ItemType file
-@("part of '${nameList}_provider.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${nameList}_state.dart
+New-Item -Name "${theme}_provider.dart" -ItemType file
+@("import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/material.dart';", "import 'package:${nameRepo}/${nameRepo}.dart';", "import 'package:uuid/uuid.dart';", "", "class ${themeMaju}Provider with ChangeNotifier {", "  ${themeMaju}Provider({required this.repository});", "", "  final ${themeMaju}Repository repository;", "", "  final uuid = const Uuid();", "", "") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
 
-New-Item -Name "${nameList}_provider.dart" -ItemType file
-@("part '${nameList}_state.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${nameList}_provider.dart
+# Ajout des différentes entités dans le provider
+foreach($entity in $entities) {
+    $entityMaju = $entity.Substring(0, 1).ToUpper() + $entity.Substring(1).ToLower()
+    @("final _items$entityMaju = <$entityMaju>[];", "  List<$entityMaju> get items$entityMaju => [..._items$entityMaju];", "", "  Future<void> fetchAndSet${entityMaju}s    () async {", "    final datas = await repository.getAll${themeMaju}s();", "    _items.clear();", "    _items.addAll(datas);", "    notifyListeners();") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
+}
+
+@("     }", "   }", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
 
 New-Item -Name "providers.dart" -ItemType file
-@("export '${nameList}_provider.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\providers.dart
+@("export '${theme}_provider.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\providers.dart
 
 Set-Location ..
 
