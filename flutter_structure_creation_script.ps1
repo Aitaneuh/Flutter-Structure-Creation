@@ -3,6 +3,17 @@ function Set-UpperCamelCase {
     return ($inputString -split '\s+|_|-' | ForEach-Object { $_.Substring(0, 1).ToUpper() + $_.Substring(1).ToLower() }) -join ''
 }
 
+# Texte du début
+Clear-Host
+Write-Host "Création complète de la structure de votre projet Flutter - en local"
+Write-Host "===================================================================="
+Write-Host ""
+Write-Host "- Assurez-vous d'avoir Flutter installé sur votre machine"
+Write-Host "- Assurez-vous d'avoir un / des fichier(s) json qui correspond à vos entités et propriétés"
+Write-Host "- Vous devrez ajoutez vos fichiers json dans le dossier packages/repository/lib/src/assets/data"
+Write-Host "- Votre fichier devra être composé de Map avec le nom de votre entité en clé"
+Write-Host ""
+
 # Demande du nom du projet
 $projectName = Read-Host "Entrez le nom de votre projet Flutter"
 $projectPath = Read-Host "Entrez le chemin du projet Flutter"
@@ -179,10 +190,31 @@ foreach ($entity in $entities) {
 
 Set-Location .. 
 
+# Ajout du dossier assets
+mkdir assets
+Set-Location assets
+mkdir data
+Set-Location ..
+
 # Ajout du dossier et des fichiers services
 New-Item -Name services -ItemType Directory
 Set-Location services
+
 New-Item -Name "services.dart" -ItemType file
+New-Item -Name "storage.dart" -ItemType file
+@("import 'package:domain_entities/domain_entities.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\storage.dart
+
+foreach($entity in $entities){
+    $name = $entity.Name
+    $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
+    New-Item -Name "${name}_local_storage.dart" -ItemType file
+    @("import 'dart:convert';", "import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/services.dart';", "import 'package:${name}_repository/${name}_repository.dart';", "", "class ${nameMaju}LocalStorage implements ${$nameMaju}Storage {", "  @override", "  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    final ${name}s = <${nameMaju}>[];", "", "        final dataString = await rootBundle.loadString('packages/${name}_repository/lib/src/assets/data/manga.json');", "       final Map<String, dynamic> json = jsonDecode(dataString);", "", "    json['${name}'].forEach((v) {", "      ${name}s.add(${nameMaju}LocalFileModel.fromJson(v).toDomainEntity());", "    });", "    return ${name}s;", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\${name}_local_storage.dart
+
+    @("")
+    @("export ${name}_local_storage.dart;") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\services.dart
+}
+
+
 Set-Location ..
 
 # Création du dossier component_library
@@ -251,11 +283,12 @@ New-Item -Name "${theme}_provider.dart" -ItemType file
 
 # Ajout des différentes entités dans le provider
 foreach($entity in $entities) {
-    $entityMaju = $entity.Substring(0, 1).ToUpper() + $entity.Substring(1).ToLower()
-    @("final _items$entityMaju = <$entityMaju>[];", "  List<$entityMaju> get items$entityMaju => [..._items$entityMaju];", "", "  Future<void> fetchAndSet${entityMaju}s    () async {", "    final datas = await repository.getAll${themeMaju}s();", "    _items.clear();", "    _items.addAll(datas);", "    notifyListeners();") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
+    $name = $entity.Name
+    $entityMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
+    @("final _items$entityMaju = <$entityMaju>[];", "  List<$entityMaju> get items$entityMaju => [..._items$entityMaju];", "", "  Future<void> fetchAndSet${entityMaju}s () async {", "    final datas = await repository.getAll${entityMaju}s();", "    _items.clear();", "    _items.addAll(datas);", "    notifyListeners();", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
 }
 
-@("     }", "   }", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
+@("   }", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
 
 New-Item -Name "providers.dart" -ItemType file
 @("export '${theme}_provider.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\providers.dart
