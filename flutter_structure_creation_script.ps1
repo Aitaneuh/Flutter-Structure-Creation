@@ -130,13 +130,13 @@ mkdir src
 Set-Location src
 
 # Fichier repo 2ème niveau
-New-Item -Name $theme"_repository.dart" -ItemType file
+New-Item -Name $nameRepo".dart" -ItemType file
 @("import 'package:domain_entities/domain_entities.dart';", "import 'package:manga_repository/src/services/services.dart';", "class ${themeMaju}Repository {", "  const ${themeMaju}Repository({required this.storage});", "", "  final Storage storage;", "") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
 
-foreach($entity in $entites) {
+foreach($entity in $entities) {
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
-    @("  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    return storage.getAll${nameMaju}s();", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
+    @("  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    return storage.getAll${nameMaju}s();", "  }") | Add-Content -Path $path\packages\$nameRepo\lib\src\$nameRepo".dart"
 }
 
 @("}") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
@@ -149,9 +149,10 @@ New-Item -Name "models.dart" -ItemType file
 # Fichiers model local
 foreach ($entity in $entities) {
     $entityName = $entity.Name
+    $nameMaju = $entityName.Substring(0, 1).ToUpper() + $entityName.Substring(1).ToLower()
     New-Item -Name "${entityName}_local_file_model.dart" -ItemType file
     @("export '${entityName}_local_file_model.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\models.dart
-    @("class ${entityName}LocalFileModel {", "  const ${entityName}LocalFileModel(") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+    @("class ${nameMaju}LocalFileModel {", "  const ${nameMaju}LocalFileModel(") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
 
     foreach ($property in $entity.Properties) {
         $thisProperty = "       this.${property},"
@@ -160,7 +161,7 @@ foreach ($entity in $entities) {
     @("  );", "") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
     
 
-    @(" factory ${entityName}LocalFileModel.fromJson(Map<String, dynamic> json) {", "    return ${entityName}LocalFileModel(") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
+    @(" factory ${nameMaju}LocalFileModel.fromJson(Map<String, dynamic> json) {", "    return ${nameMaju}LocalFileModel(") | Add-Content -Path $path\packages\$nameRepo\lib\src\models\${entityName}_local_file_model.dart
 
     foreach ($property in $entity.Properties) {
         $thisProperty = "           json['${property}'],"
@@ -190,7 +191,7 @@ foreach ($entity in $entities) {
     New-Item -Name "${entityName}_local_file_model_to_domain.dart" -ItemType file
     @("export '${entityName}_local_file_model_to_domain.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\mappers\mappers.dart
 
-    @("import 'package:domain_entities/domain_entities.dart';", "import 'package:$nameRepo/$nameRepo.dart';", "extension ${entityName}LocalFileModelToDomain on ${entityName}LocalFileModel {", "  ${entityMaju} toDomainEntity() {", "    return ${entityMaju}(") | Add-Content -Path $path\packages\$nameRepo\lib\src\mappers\${entityName}_local_file_model_to_domain.dart
+    @("import 'package:domain_entities/domain_entities.dart';", "import 'package:$nameRepo/$nameRepo.dart';", "extension ${entityMaju}LocalFileModelToDomain on ${entityMaju}LocalFileModel {", "  ${entityMaju} toDomainEntity() {", "    return ${entityMaju}(") | Add-Content -Path $path\packages\$nameRepo\lib\src\mappers\${entityName}_local_file_model_to_domain.dart
 
     foreach ($property in $entity.Properties) {
         $thisProperty = "       ${property}: ${property},"
@@ -228,11 +229,12 @@ foreach($entity in $entities){
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
     New-Item -Name "${name}_local_storage.dart" -ItemType file
-    @("import 'dart:convert';", "import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/services.dart';", "import 'package:${name}_repository/${name}_repository.dart';", "", "class ${nameMaju}LocalStorage implements ${$nameMaju}Storage {", "  @override", "  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    final ${name}s = <${nameMaju}>[];", "", "        final dataString = await rootBundle.loadString('packages/${name}_repository/lib/src/assets/data/data.json');", "       final Map<String, dynamic> json = jsonDecode(dataString);", "", "    json['${name}'].forEach((v) {", "      ${name}s.add(${nameMaju}LocalFileModel.fromJson(v).toDomainEntity());", "    });", "    return ${name}s;", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\${name}_local_storage.dart
+    @("import 'dart:convert';", "import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/services.dart';", "import 'package:${theme}_repository/${theme}_repository.dart';", "", "class ${nameMaju}LocalStorage implements ${$nameMaju}Storage {", "  @override", "  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    final ${name}s = <${nameMaju}>[];", "", "        final dataString = await rootBundle.loadString('packages/${name}_repository/lib/src/assets/data/data.json');", "       final Map<String, dynamic> json = jsonDecode(dataString);", "", "    json['${name}'].forEach((v) {", "      ${name}s.add(${nameMaju}LocalFileModel.fromJson(v).toDomainEntity());", "    });", "    return ${name}s;", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\${name}_local_storage.dart
 
     @("")
     @("export '${name}_local_storage.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\services.dart
 }
+@("export 'storage.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\services.dart
 
 
 Set-Location ..
@@ -305,7 +307,7 @@ New-Item -Name "${theme}_provider.dart" -ItemType file
 foreach($entity in $entities) {
     $name = $entity.Name
     $entityMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
-    @("final _items$entityMaju = <$entityMaju>[];", "  List<$entityMaju> get items$entityMaju => [..._items$entityMaju];", "", "  Future<void> fetchAndSet${entityMaju}s () async {", "    final datas = await repository.getAll${entityMaju}s();", "    _items.clear();", "    _items.addAll(datas);", "    notifyListeners();", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
+    @("final _items$entityMaju = <$entityMaju>[];", "  List<$entityMaju> get items$entityMaju => [..._items$entityMaju];", "", "  Future<void> fetchAndSet${entityMaju}s () async {", "    final datas = await repository.getAll${entityMaju}s();", "    _items${entityMaju}.clear();", "    _items${entityMaju}.addAll(datas);", "    notifyListeners();", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
 }
 
 @("}") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
@@ -324,7 +326,7 @@ New-Item -Name 'home_screen.dart' -ItemType file
 
 foreach($entity in $entities) { #todo : ajouter tous les propriétés avec chaque élément du json
     $name = $entity.Name
-    @("Text($name)") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+    @("         const Text('$name'),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 }
 
 @("         ]", "      ),", "    );", "  }", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
