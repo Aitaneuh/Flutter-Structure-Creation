@@ -124,19 +124,30 @@ New-Item -Name pubspec.yaml -ItemType file
 mkdir lib
 Set-Location lib
 
-@("export 'src/mappers/mappers.dart';", "export 'src/models/models.dart';", "export 'src/services/services.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\$nameRepo.dart
+@("library $nameRepo;","export 'src/mappers/mappers.dart';", "export 'src/models/models.dart';", "export 'src/services/services.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\$nameRepo.dart
 
 mkdir src
 Set-Location src
 
 # Fichier repo 2ème niveau
 New-Item -Name $nameRepo".dart" -ItemType file
-@("import 'package:domain_entities/domain_entities.dart';", "import 'package:manga_repository/src/services/services.dart';", "class ${themeMaju}Repository {", "  const ${themeMaju}Repository({required this.storage});", "", "  final Storage storage;", "") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
+@("import 'package:domain_entities/domain_entities.dart';", "import 'package:${nameRepo}/src/services/services.dart';", "import 'package:${nameRepo}/${nameRepo}.dart';", "class ${themeMaju}Repository {") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
+
+foreach($entity in $entities) {
+    $name = $entity.Name
+    $requiredEntities += "required this.${name}Storage,"
+}
+
+@(" const ${themeMaju}Repository({$requiredEntities});", "") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
+
 
 foreach($entity in $entities) {
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
-    @("  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    return storage.getAll${nameMaju}s();", "  }") | Add-Content -Path $path\packages\$nameRepo\lib\src\$nameRepo".dart"
+
+    @("  final ${nameMaju}Storage ${name}Storage;", "") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
+
+    @("  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    return ${name}Storage.getAll${nameMaju}s();", "  }") | Add-Content -Path $path\packages\$nameRepo\lib\src\$nameRepo".dart"
 }
 
 @("}") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
@@ -229,7 +240,7 @@ foreach($entity in $entities){
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
     New-Item -Name "${name}_local_storage.dart" -ItemType file
-    @("import 'dart:convert';", "import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/services.dart';", "import 'package:${theme}_repository/${theme}_repository.dart';", "", "class ${nameMaju}LocalStorage implements ${$nameMaju}Storage {", "  @override", "  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    final ${name}s = <${nameMaju}>[];", "", "        final dataString = await rootBundle.loadString('packages/${name}_repository/lib/src/assets/data/data.json');", "       final Map<String, dynamic> json = jsonDecode(dataString);", "", "    json['${name}'].forEach((v) {", "      ${name}s.add(${nameMaju}LocalFileModel.fromJson(v).toDomainEntity());", "    });", "    return ${name}s;", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\${name}_local_storage.dart
+    @("import 'dart:convert';", "import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/services.dart';", "import 'package:${theme}_repository/${theme}_repository.dart';", "", "class ${nameMaju}LocalStorage implements ${nameMaju}Storage {", "  @override", "  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    final ${name}s = <${nameMaju}>[];", "", "        final dataString = await rootBundle.loadString('packages/${name}_repository/lib/src/assets/data/data.json');", "       final Map<String, dynamic> json = jsonDecode(dataString);", "", "    json['${name}'].forEach((v) {", "      ${name}s.add(${nameMaju}LocalFileModel.fromJson(v).toDomainEntity());", "    });", "    return ${name}s;", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\${name}_local_storage.dart
 
     @("")
     @("export '${name}_local_storage.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\services.dart
@@ -344,4 +355,4 @@ flutter pub add provider
 
 Remove-Item -Path main.dart
 New-Item -Name main.dart -ItemType file
-@("import 'package:flutter/material.dart';", "", "void main() {", "  runApp(const MyApp());", "}", "", "class MyApp extends StatelessWidget {", "  const MyApp({super.key});", "", "  @override", "  Widget build(BuildContext context) {", "    return Multiprovider(", "      providers: [", "        Provider<${theme}LocalStorage>(", "          create: (context) => ${themeMaju}LocalStorage(),", "        ),", "        Provider<${themeMaju}Repository>(", "          create: (context) =>", "              MangaRepository(storage: context.read<Storage>()),", "        ),", "        ChangeNotifierProvider<${themeMaju}ListProvider>(", "          create: (context) =>", "              ${themeMaju}ListProvider(repository: context.read<$nameRepo>()),", "        ),", "      ],", "      child: MaterialApp(", "        debugShowCheckedModeBanner: false,", "        title: $projectName,", "        theme: ThemeData(", "          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),", "          useMaterial3: true,", "        ),", "      ),", "      home: const HomeScreen(),", "    );", "  }", "}") | Add-Content -Path $path\lib\main.dart
+@("import 'package:flutter/material.dart';", "import 'package:component_library/component_library.dart';","import 'package:${theme}_list/${theme}_list.dart';", "import 'package:${theme}_repository/${theme}_repository.dart';", "", "void main() {", "  runApp(const MyApp());", "}", "", "class MyApp extends StatelessWidget {", "  const MyApp({super.key});", "", "  @override", "  Widget build(BuildContext context) {", "    return Multiprovider(", "      providers: [", "        Provider<${theme}LocalStorage>(", "          create: (context) => ${themeMaju}LocalStorage(),", "        ),", "        Provider<${themeMaju}Repository>(", "          create: (context) =>", "              MangaRepository(storage: context.read<Storage>()),", "        ),", "        ChangeNotifierProvider<${themeMaju}ListProvider>(", "          create: (context) =>", "              ${themeMaju}ListProvider(repository: context.read<$nameRepo>()),", "        ),", "      ],", "      child: MaterialApp(", "        debugShowCheckedModeBanner: false,", "        title: $projectName,", "        theme: ThemeData(", "          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),", "          useMaterial3: true,", "        ),", "      ),", "      home: const HomeScreen(),", "    );", "  }", "}") | Add-Content -Path $path\lib\main.dart
