@@ -116,7 +116,7 @@ New-Item -Name analysis_options.yaml -ItemType file
 @("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\$nameRepo\analysis_options.yaml
 
 New-Item -Name pubspec.yaml -ItemType file
-@("name: $nameRepo", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\$nameRepo\pubspec.yaml
+@("name: $nameRepo", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0", "flutter: ", "  assets:", "    - lib/src/assets/data/data.json") | Add-Content -Path $path\packages\$nameRepo\pubspec.yaml
 
 # Ajout des dossiers lib/src et du barrel
 mkdir lib
@@ -378,3 +378,5 @@ mkdir .vscode
 Set-Location .vscode
 New-Item -Name launch.json -ItemType file
 @('{', '    "configurations": [', '        {', '            "name": "Main",', '            "type": "dart",', '            "request": "launch",', '            "program": "lib\\main.dart"', '        }', '    ]', '}') | Add-Content -Path $path/.vscode/launch.json
+
+Set-Location $path
