@@ -75,12 +75,10 @@ New-Item -Name pubspec.yaml -ItemType file
 @("name: domain_entities", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  equatable: ^2.0.7", "", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\domain_entities\pubspec.yaml
 
 foreach ($entity in $entities) {
-    $entityName = $entity.Name  # Récupération du nom de l'entité
-    $entityPath = "$path\packages\domain_entities\lib\src\$entityName"
+    $entityName = $entity.Name
+    $entityPath = "$path\packages\domain_entities\lib\src"
 
     $className = Set-UpperCamelCase $entityName
-
-    mkdir $entityPath -Force  # -Force pour éviter les erreurs si le dossier existe déjà
 
     $filePath = "$entityPath\$entityName.dart"
     New-Item -Path $filePath -ItemType File -Force
@@ -103,7 +101,7 @@ foreach ($entity in $entities) {
     @("    $dataLine,", "  ];", "}") | Add-Content -Path $filePath
 
     # Mise à jour du barrel file
-    @("export 'src/$entityName/$entityName.dart';") | Add-Content -Path "$path\packages\domain_entities\lib\domain_entities.dart"
+    @("export 'src/$entityName.dart';") | Add-Content -Path "$path\packages\domain_entities\lib\domain_entities.dart"
 }
 
 
@@ -118,13 +116,13 @@ New-Item -Name analysis_options.yaml -ItemType file
 @("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\$nameRepo\analysis_options.yaml
 
 New-Item -Name pubspec.yaml -ItemType file
-@("name: $nameRepo", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\$nameRepo\pubspec.yaml
+@("name: $nameRepo", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\$nameRepo\pubspec.yaml
 
 # Ajout des dossiers lib/src et du barrel
 mkdir lib
 Set-Location lib
 
-@("library $nameRepo;","export 'src/mappers/mappers.dart';", "export 'src/models/models.dart';", "export 'src/services/services.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\$nameRepo.dart
+@("library $nameRepo;", "export 'src/mappers/mappers.dart';", "export 'src/models/models.dart';", "export 'src/services/services.dart';", "export 'src/${nameRepo}.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\$nameRepo.dart
 
 mkdir src
 Set-Location src
@@ -133,7 +131,7 @@ Set-Location src
 New-Item -Name $nameRepo".dart" -ItemType file
 @("import 'package:domain_entities/domain_entities.dart';", "import 'package:${nameRepo}/src/services/services.dart';", "import 'package:${nameRepo}/${nameRepo}.dart';", "class ${themeMaju}Repository {") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
 
-foreach($entity in $entities) {
+foreach ($entity in $entities) {
     $name = $entity.Name
     $requiredEntities += "required this.${name}Storage,"
 }
@@ -141,7 +139,7 @@ foreach($entity in $entities) {
 @(" const ${themeMaju}Repository({$requiredEntities});", "") | Add-Content -Path $path\packages\$nameRepo\lib\src\$theme"_repository.dart"
 
 
-foreach($entity in $entities) {
+foreach ($entity in $entities) {
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
 
@@ -229,18 +227,18 @@ New-Item -Name "services.dart" -ItemType file
 New-Item -Name "storage.dart" -ItemType file
 @("import 'package:domain_entities/domain_entities.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\storage.dart
 
-foreach($entity in $entities) {
+foreach ($entity in $entities) {
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
     @("abstract class ${nameMaju}Storage {", "  Future<List<${nameMaju}>> getAll${nameMaju}s();", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\storage.dart
 }
 
 # Ajout des différents fichiers de storage_local
-foreach($entity in $entities){
+foreach ($entity in $entities) {
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
     New-Item -Name "${name}_local_storage.dart" -ItemType file
-    @("import 'dart:convert';", "import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/services.dart';", "import 'package:${theme}_repository/${theme}_repository.dart';", "", "class ${nameMaju}LocalStorage implements ${nameMaju}Storage {", "  @override", "  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    final ${name}s = <${nameMaju}>[];", "", "        final dataString = await rootBundle.loadString('packages/${name}_repository/lib/src/assets/data/data.json');", "       final Map<String, dynamic> json = jsonDecode(dataString);", "", "    json['${name}'].forEach((v) {", "      ${name}s.add(${nameMaju}LocalFileModel.fromJson(v).toDomainEntity());", "    });", "    return ${name}s;", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\${name}_local_storage.dart
+    @("import 'dart:convert';", "import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/services.dart';", "import 'package:${theme}_repository/${theme}_repository.dart';", "", "class ${nameMaju}LocalStorage implements ${nameMaju}Storage {", "  @override", "  Future<List<${nameMaju}>> getAll${nameMaju}s() async {", "    final ${name}s = <${nameMaju}>[];", "", "        final dataString = await rootBundle.loadString('packages/${theme}_repository/lib/src/assets/data/data.json');", "       final Map<String, dynamic> json = jsonDecode(dataString);", "", "    json['${name}'].forEach((v) {", "      ${name}s.add(${nameMaju}LocalFileModel.fromJson(v).toDomainEntity());", "    });", "    return ${name}s;", "  }", "}") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\${name}_local_storage.dart
 
     @("")
     @("export '${name}_local_storage.dart';") | Add-Content -Path $path\packages\$nameRepo\lib\src\services\services.dart
@@ -315,7 +313,7 @@ New-Item -Name "${theme}_provider.dart" -ItemType file
 @("import 'package:domain_entities/domain_entities.dart';", "import 'package:flutter/material.dart';", "import 'package:${nameRepo}/${nameRepo}.dart';", "import 'package:uuid/uuid.dart';", "", "class ${themeMaju}Provider with ChangeNotifier {", "  ${themeMaju}Provider({required this.repository});", "", "  final ${themeMaju}Repository repository;", "", "  final uuid = const Uuid();", "", "") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
 
 # Ajout des différentes entités dans le provider
-foreach($entity in $entities) {
+foreach ($entity in $entities) {
     $name = $entity.Name
     $entityMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
     @("final _items$entityMaju = <$entityMaju>[];", "  List<$entityMaju> get items$entityMaju => [..._items$entityMaju];", "", "  Future<void> fetchAndSet${entityMaju}s () async {", "    final datas = await repository.getAll${entityMaju}s();", "    _items${entityMaju}.clear();", "    _items${entityMaju}.addAll(datas);", "    notifyListeners();", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\providers\${theme}_provider.dart
@@ -335,7 +333,8 @@ Set-Location screens
 New-Item -Name 'home_screen.dart' -ItemType file
 @("import 'package:component_library/component_library.dart';", "import 'package:flutter/material.dart';", "import 'package:${theme}_list/${theme}_list.dart';", "", "class HomeScreen extends StatelessWidget {", "  const HomeScreen({super.key});", "", "  @override", "  Widget build(BuildContext context) {", "    return Scaffold(", "      appBar: AppBar(),", "      body: Row(", "        children: [") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
-foreach($entity in $entities) { #todo : ajouter tous les propriétés avec chaque élément du json
+foreach ($entity in $entities) {
+    #todo : ajouter tous les propriétés avec chaque élément du json
     $name = $entity.Name
     @("         const Text('$name'),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 }
@@ -346,13 +345,36 @@ New-Item -Name "screens.dart" -ItemType file
 @("export 'home_screen.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\screens.dart
 
 Set-Location $path
-@("name: $projectName", "description: A new Flutter project.", "", "publish_to: 'none'", "", "version: 1.0.0+1", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: packages/component_library", "  domain_entities:", "    path: packages/domain_entities", "  ${nameList}:", "    path: packages/features/${nameList}", "  ${nameRepo}:", "    path: packages/${nameRepo}", "dev_dependencies:", "  flutter_test:", "    sdk: flutter", "  flutter_lints: ^4.0.0", "", "flutter:", "  uses-material-design: true") | Set-Content -Path $path\pubspec.yaml
+@("name: $projectName", "description: A new Flutter project.", "", "publish_to: 'none'", "", "version: 1.0.0+1", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: packages/component_library", "  ${nameList}:", "    path: packages/features/${nameList}", "  ${nameRepo}:", "    path: packages/${nameRepo}", "  cupertino_icons: ^1.0.8", "dev_dependencies:", "  flutter_test:", "    sdk: flutter", "  flutter_lints: ^4.0.0", "", "flutter:", "  uses-material-design: true") | Set-Content -Path $path\pubspec.yaml
 
 # Ajout du main
 Set-Location -Path $path\lib
 
-flutter pub add provider
+# flutter pub add provider
 
 Remove-Item -Path main.dart
 New-Item -Name main.dart -ItemType file
-@("import 'package:flutter/material.dart';", "import 'package:component_library/component_library.dart';","import 'package:${theme}_list/${theme}_list.dart';", "import 'package:${theme}_repository/${theme}_repository.dart';", "", "void main() {", "  runApp(const MyApp());", "}", "", "class MyApp extends StatelessWidget {", "  const MyApp({super.key});", "", "  @override", "  Widget build(BuildContext context) {", "    return Multiprovider(", "      providers: [", "        Provider<${theme}LocalStorage>(", "          create: (context) => ${themeMaju}LocalStorage(),", "        ),", "        Provider<${themeMaju}Repository>(", "          create: (context) =>", "              MangaRepository(storage: context.read<Storage>()),", "        ),", "        ChangeNotifierProvider<${themeMaju}ListProvider>(", "          create: (context) =>", "              ${themeMaju}ListProvider(repository: context.read<$nameRepo>()),", "        ),", "      ],", "      child: MaterialApp(", "        debugShowCheckedModeBanner: false,", "        title: $projectName,", "        theme: ThemeData(", "          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),", "          useMaterial3: true,", "        ),", "      ),", "      home: const HomeScreen(),", "    );", "  }", "}") | Add-Content -Path $path\lib\main.dart
+@("import 'package:flutter/material.dart';", "import 'package:component_library/component_library.dart';", "import 'package:${theme}_list/${theme}_list.dart';", "import 'package:${theme}_repository/${theme}_repository.dart';", "", "void main() {", "  runApp(const MyApp());", "}", "", "class MyApp extends StatelessWidget {", "  const MyApp({super.key});", "", "  @override", "  Widget build(BuildContext context) {", "    return MultiProvider(", "      providers: [") | Add-Content -Path $path\lib\main.dart
+
+foreach ($entity in $entities) {
+    $name = $entity.Name
+    $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
+    @("        Provider<${nameMaju}LocalStorage>(", "          create: (context) => ${nameMaju}LocalStorage(),", "        ),") | Add-Content -Path $path\lib\main.dart
+}
+
+@("        Provider<${themeMaju}Repository>(", "          create: (context) =>") | Add-Content -Path $path\lib\main.dart
+$storages = ""
+foreach ($entity in $entities) {
+    $name = $entity.Name
+    $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
+    $storages += "${name}Storage: context.read<${nameMaju}LocalStorage>(), "
+}
+@() | Add-Content -Path $path\lib\main.dart
+@("         ${themeMaju}Repository($storages),", "        ),", "        ChangeNotifierProvider<${themeMaju}Provider>(", "          create: (context) =>", "              ${themeMaju}Provider(repository: context.read<${themeMaju}Repository>()),", "        ),", "      ],", "      child: MaterialApp(", "        debugShowCheckedModeBanner: false,", "        title: '$projectName',", "        theme: ThemeData(", "          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),", "          useMaterial3: true,", "        ),", "      home: const HomeScreen(),", "      ),", "    );", "  }", "}") | Add-Content -Path $path\lib\main.dart
+
+# Création du fichier de configuration
+Set-Location $path
+mkdir .vscode
+Set-Location .vscode
+New-Item -Name launch.json -ItemType file
+@('{', '    "configurations": [', '        {', '            "name": "Main",', '            "type": "dart",', '            "request": "launch",', '            "program": "lib\\main.dart"', '        }', '    ]', '}') | Add-Content -Path $path/.vscode/launch.json
