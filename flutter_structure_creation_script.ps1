@@ -331,7 +331,7 @@ mkdir screens
 Set-Location screens
 
 New-Item -Name 'home_screen.dart' -ItemType file
-@("import 'package:component_library/component_library.dart';", "import 'package:flutter/material.dart';", "import 'package:nba_list/nba_list.dart';", "", "class HomeScreen extends StatefulWidget {", "  const HomeScreen({super.key});", "", "  @override", "  State<HomeScreen> createState() => _HomeScreenState();", "}", "class _HomeScreenState extends State<HomeScreen> {", "  var _isLoading = false;", "  var _isInit = true;", "", "  @override", "  void didChangeDependencies() async {", "    if (_isInit) {") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+@("import 'package:component_library/component_library.dart';", "import 'package:flutter/material.dart';", "import 'package:${theme}_list/${theme}_list.dart';", "", "class HomeScreen extends StatefulWidget {", "  const HomeScreen({super.key});", "", "  @override", "  State<HomeScreen> createState() => _HomeScreenState();", "}", "class _HomeScreenState extends State<HomeScreen> {", "  var _isLoading = false;", "  var _isInit = true;", "", "  @override", "  void didChangeDependencies() async {", "    if (_isInit) {") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
 foreach ($entity in $entities) {
     $name = $entity.Name
@@ -347,15 +347,15 @@ foreach ($entity in $entities) {
     @("    final ${name}s = context.watch<${themeMaju}Provider>().items${nameMaju};") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 }
 
-@("    return Scaffold(", "      appBar: AppBar(),", "      body: Row(", "        children: [") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+@("    return Scaffold(", "      appBar: AppBar(),", "      body: Column(", "        children: [") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
 foreach ($entity in $entities) {
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
-    @("Text('${nameMaju}\n'),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+    @("Text('${nameMaju}'),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
     foreach($property in $entity.Properties) {
-        @("Text(${name}s[0].${property}\n),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+        @("Text(${name}s[0].${property}),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
     }
     @("Text(''),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart 
 }
