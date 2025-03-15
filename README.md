@@ -1,35 +1,78 @@
-# Script PowerShell pour compléter la structure Flutter
+# Flutter Project Structure Generator
 
-Ce script PowerShell permet de générer automatiquement la structure d'un projet Flutter en ajoutant les répertoires suivants :
-- `component_library`
-- `screen`
-- `provider`
-- `repository`
+## Overview
+This PowerShell script automates the creation of a structured Flutter project with a clean architecture approach. It generates necessary packages, folders, and files based on user input, making it easier to start a new Flutter project.
 
-### Prérequis
+## Features
+- Initializes a new Flutter project
+- Generates domain entities and repository structure
+- Supports JSON-based entity and property definitions
+- Creates clean architecture components like models, mappers, and services
+- Adds essential dependencies for Flutter development
 
-- **PowerShell** : Ce script est écrit en PowerShell et nécessite PowerShell version 5.1 ou supérieure.
-- **Flutter** : Assurez-vous d'avoir Flutter installé et configuré sur votre machine.
-  
-### Description
+## Prerequisites
+Before running the script, ensure you have:
+- [Flutter](https://flutter.dev/) installed on your machine
+- A valid JSON file with entity definitions
+- PowerShell installed on your system
 
-Ce script crée la structure de répertoires de base pour un projet Flutter en se basant sur des entités (par exemple, les écrans ou composants) définis par l'utilisateur. Il est conçu pour faciliter l'organisation de votre code dans un modèle MVVM, avec des répertoires dédiés aux composants réutilisables, aux écrans, aux providers et aux repositories.
-
-### Fonctionnalités
-
-- Crée la structure de dossier suivante :
-    - `lib/component_library/`
-    - `lib/domain_entities/`
-    - `lib/features/`
-    - `lib/repositories/`
-- Demande à l'utilisateur le chemin où placer la structure (par défaut dans le répertoire `lib/`).
-- Permet de définir un thème pour la structure générée.
-- Permet de spécifier le nom des entités à inclure (ex. : `MyScreen`, `MyProvider`, etc.).
-
-### Installation
-
-1. Téléchargez le fichier `flutter_create_structure.ps1`.
-2. Ouvrez PowerShell et naviguez jusqu'au dossier où vous avez téléchargé le script.
-3. Exécutez le script en tapant la commande suivante :
+## Usage
+1. **Run the script in PowerShell**
    ```powershell
-   .\flutter_create_structure.ps1
+   .\generate_flutter_structure.ps1
+   ```
+2. **Provide the required details when prompted:**
+   - Project name
+   - Project path
+   - Main theme name
+   - Entities and properties
+
+3. **The script will:**
+   - Create a new Flutter project
+   - Generate the necessary package structure
+   - Set up domain entities, repository, and services
+   - Configure required dependencies
+
+## Project Structure
+The script will generate the following structure:
+```
+project_name/
+│── packages/
+│   ├── domain_entities/
+│   │   ├── lib/
+│   │   │   ├── src/
+│   │   │   ├── domain_entities.dart
+│   ├── repository/
+│   │   ├── lib/
+│   │   │   ├── src/
+│   │   │   │   ├── models/
+│   │   │   │   ├── mappers/
+│   │   │   │   ├── services/
+│   │   │   │   ├── repository.dart
+│   ├── component_library/
+│   │   ├── lib/
+│   │   │   ├── src/
+│   │   │   ├── component_library.dart
+│── example/
+│── pubspec.yaml
+```
+
+## Dependencies
+The script automatically installs the following dependencies:
+- `equatable` for entity equality
+- `flutter_lints` for linting
+- `storybook_flutter` for UI component previews
+
+## Notes
+- JSON files containing entity definitions must be placed in:
+  ```
+  packages/repository/lib/src/assets/data
+  ```
+- The JSON format should be:
+  ```json
+  {
+    "EntityName": [
+      { "property1": "value", "property2": "value" }
+    ]
+  }
+  ```
