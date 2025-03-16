@@ -19,7 +19,7 @@ Before running the script, ensure you have:
 ## Usage
 1. **Run the script in PowerShell**
    ```powershell
-   .\generate_flutter_structure.ps1
+   .\flutter_structure_creation_script.ps1
    ```
 2. **Provide the required details when prompted:**
    - Project name
@@ -39,22 +39,37 @@ The script will generate the following structure:
 project_name/
 │── packages/
 │   ├── domain_entities/
+|   |   ├── pubspec.yaml
+|   |   ├── analysis_options
 │   │   ├── lib/
 │   │   │   ├── src/
-│   │   │   ├── domain_entities.dart
-│   ├── repository/
+│   │   ├── domain_entities.dart
+│   ├── $theme_repository/
+|   |   ├── pubspec.yaml
+|   |   ├── analysis_options
 │   │   ├── lib/
 │   │   │   ├── src/
 │   │   │   │   ├── models/
 │   │   │   │   ├── mappers/
 │   │   │   │   ├── services/
-│   │   │   │   ├── repository.dart
+│   │   │   ├── repository.dart
 │   ├── component_library/
+|   |   ├── pubspec.yaml
+|   |   ├── analysis_options
+|   |   │── example/ -> StoryBook
 │   │   ├── lib/
 │   │   │   ├── src/
-│   │   │   ├── component_library.dart
-│── example/
-│── pubspec.yaml
+│   │   ├── component_library.dart
+|   ├── features
+|   |   ├── $theme_list
+|   |   |   ├── pubspec.yaml
+|   |   |   ├── analysis_options
+|   |   |   ├── lib/
+|   |   |   |   ├── src/
+|   |   |   |   ├── $theme_list.dart
+|   |   |   |   |   ├── lib/
+|   |   |   |   |   |   ├── provider/
+|   |   |   |   |   |   ├── screen/
 ```
 
 ## Dependencies
