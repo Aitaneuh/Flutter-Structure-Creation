@@ -7,7 +7,8 @@ This PowerShell script automates the creation of a structured Flutter project wi
 - Initializes a new Flutter project
 - Generates domain entities and repository structure
 - Supports JSON-based entity and property definitions
-- Creates clean architecture components like models, mappers, and services
+- Creates clean architecture components like models, mappers, and services for the repo and provider & screen for the features
+- Create also a lauch configuration for VScode and the main to execute the project
 - Adds essential dependencies for Flutter development
 
 ## Prerequisites
