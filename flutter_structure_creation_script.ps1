@@ -342,7 +342,7 @@ foreach ($entity in $entities) {
     @("    if (${theme}Provider.items${nameMaju}.isEmpty) {", "      await ${theme}Provider.fetchAndSet${nameMaju}s();", "    }") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 }
 
-@("    setState(() {","      _isLoading = false;","    });","  }", "", "  @override", "  Widget build(BuildContext context) {", "    final nbaProvider = context.watch<NbaProvider>();", "", "    return Scaffold(", "      appBar: AppBar(title: const Text('${themeMaju}')),", "      body: _isLoading", "          ? const Center(child: CircularProgressIndicator())", "          : ListView(", "              padding: const EdgeInsets.all(16.0),", "              children: [") | Add-content -path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+@("    setState(() {","      _isLoading = false;","    });","  }", "", "  @override", "  Widget build(BuildContext context) {", "    final ${theme}Provider = context.watch<${themeMaju}Provider>();", "", "    return Scaffold(", "      appBar: AppBar(title: const Text('${themeMaju}')),", "      body: _isLoading", "          ? const Center(child: CircularProgressIndicator())", "          : ListView(", "              padding: const EdgeInsets.all(16.0),", "              children: [") | Add-content -path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
 foreach ($entity in $entities) {
     $name = $entity.Name
@@ -350,7 +350,9 @@ foreach ($entity in $entities) {
     @("                ...${theme}Provider.items${nameMaju}.map(", "                  ($name) => _buildSection('$nameMaju', [") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
     foreach($property in $entity.Properties) {
-        @("                    'Name: ${$name.property}',") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+        $propertyMaju = $property.Substring(0, 1).ToUpper() + $property.Substring(1).ToLower()
+        $element = '${' + $name + "." + $property + '}'
+        @("                    '${propertyMaju}: $element',") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
     }
 
     @("                  ]),", "                ),", "                const Divider(),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
