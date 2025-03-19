@@ -35,7 +35,6 @@ $themeMaju = $theme.Substring(0, 1).ToUpper() + $theme.Substring(1).ToLower()
 
 # Récupération de la version du SDK et stockage dans une variable
 $sdk = ((Get-Content -Path "$path\pubspec.yaml") -match "sdk: \^(\d+\.\d+\.\d+)")[0] -split "sdk: \^" | Select-Object -Last 1
-Write-Host $sdk
 
 # Sélection des entités du projet
 $entities = @()
@@ -335,37 +334,29 @@ mkdir screens
 Set-Location screens
 
 New-Item -Name 'home_screen.dart' -ItemType file
-@("import 'package:component_library/component_library.dart';", "import 'package:flutter/material.dart';", "import 'package:${theme}_list/${theme}_list.dart';", "", "class HomeScreen extends StatefulWidget {", "  const HomeScreen({super.key});", "", "  @override", "  State<HomeScreen> createState() => _HomeScreenState();", "}", "class _HomeScreenState extends State<HomeScreen> {", "  var _isLoading = false;", "  var _isInit = true;", "", "  @override", "  void didChangeDependencies() async {", "    if (_isInit) {") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+@("import 'package:component_library/component_library.dart';", "import 'package:flutter/material.dart';", "import 'package:${theme}_list/${theme}_list.dart';", "", "class HomeScreen extends StatefulWidget {", "  const HomeScreen({super.key});", "", "  @override", "  State<HomeScreen> createState() => _HomeScreenState();", "}", "class _HomeScreenState extends State<HomeScreen> {", "  var _isLoading = false;", "  var _isInit = true;", "", "  @override", "  void didChangeDependencies() async {", "    if (_isInit) {", "      _fetchData();", "      _isInit = false;", "    }", "    }", "", "  Future<void> _fetchData() async {", "    setState(() {", "      _isLoading = true;", "    });", "", "    final ${theme}Provider = context.read<${themeMaju}Provider>();", "") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
 foreach ($entity in $entities) {
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
-    @("      if (context.read<${themeMaju}Provider>().items${nameMaju}.isEmpty) {", "        _isLoading = true;", "        await context.read<${themeMaju}Provider>().fetchAndSet${nameMaju}s();", "        setState(() {", "          _isLoading = false;", "        });", "      }") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+    @("    if (${theme}Provider.items${nameMaju}.isEmpty) {", "      await ${theme}Provider.fetchAndSet${nameMaju}s();", "    }") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 }
 
-@("    }", "    _isInit = false;", "    super.didChangeDependencies();", "  }", "", "  @override", "  Widget build(BuildContext context) {") | Add-content -path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+@("    setState(() {","      _isLoading = false;","    });","  }", "", "  @override", "  Widget build(BuildContext context) {", "    final nbaProvider = context.watch<NbaProvider>();", "", "    return Scaffold(", "      appBar: AppBar(title: const Text('${themeMaju}')),", "      body: _isLoading", "          ? const Center(child: CircularProgressIndicator())", "          : ListView(", "              padding: const EdgeInsets.all(16.0),", "              children: [") | Add-content -path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
 foreach ($entity in $entities) {
     $name = $entity.Name
     $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
-    @("    final ${name}s = context.watch<${themeMaju}Provider>().items${nameMaju};") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
-}
-
-@("    return Scaffold(", "      appBar: AppBar(),", "      body: Column(", "        children: [") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
-
-foreach ($entity in $entities) {
-    $name = $entity.Name
-    $nameMaju = $name.Substring(0, 1).ToUpper() + $name.Substring(1).ToLower()
-    @("Text('${nameMaju}'),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+    @("                ...${theme}Provider.items${nameMaju}.map(", "                  ($name) => _buildSection('$nameMaju', [") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
     foreach($property in $entity.Properties) {
-        @("Text(${name}s[0].${property}),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
+        @("                    'Name: ${$name.property}',") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
     }
-    @("Text(''),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart 
+
+    @("                  ]),", "                ),", "                const Divider(),") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 }
 
-@("        ],", "      ),", "    );", "  }", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
-
+@("              ],", "            ),", "    );", "  }", "", "  Widget _buildSection(String title, List<String> details) {", "    return Column(", "      crossAxisAlignment: CrossAxisAlignment.start,", "      children: [", "        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),", "        ...details.map((detail) => Text(detail)),", "        const SizedBox(height: 10),", "      ],", "    );", "  }", "}") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\home_screen.dart
 
 New-Item -Name "screens.dart" -ItemType file
 @("export 'home_screen.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\screens.dart

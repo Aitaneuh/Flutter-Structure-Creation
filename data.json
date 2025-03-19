@@ -2,19 +2,19 @@
     "player": [
         {
             "name": "John Doe",
-            "age": 35
+            "age": "35"
         },
         {
             "name": "Jane Doe",
-            "age": 25
+            "age": "25"
         },
         {
             "name": "Jim Doe",
-            "age": 30
+            "age": "30"
         },
         {
             "name": "Jill Doe",
-            "age": 20
+            "age": "20"
         }
     ],
     "team": [
