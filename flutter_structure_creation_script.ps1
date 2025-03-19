@@ -20,7 +20,7 @@ $projectPath = Read-Host "Entrez le chemin du projet Flutter"
 
 Write-Host "Création du projet Flutter : $projectName"
 Set-Location $projectPath
-$platforms = "android,web"
+$platforms = "android,web" #todo
 flutter create --platforms=$platforms $projectName
 Write-Host "Le projet $projectName a été créé avec succès."
 
@@ -32,6 +32,10 @@ $path = "$projectPath\$projectName"
 # Sélection du thème principal
 $theme = Read-Host "Entrez le thème principal de votre projet Flutter"
 $themeMaju = $theme.Substring(0, 1).ToUpper() + $theme.Substring(1).ToLower()
+
+# Récupération de la version du SDK et stockage dans une variable
+$sdk = ((Get-Content -Path "$path\pubspec.yaml") -match "sdk: \^(\d+\.\d+\.\d+)")[0] -split "sdk: \^" | Select-Object -Last 1
+Write-Host $sdk
 
 # Sélection des entités du projet
 $entities = @()
@@ -72,7 +76,7 @@ New-Item -Name analysis_options.yaml -ItemType file
 
 New-Item -Name pubspec.yaml -ItemType file
 
-@("name: domain_entities", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  equatable: ^2.0.7", "", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\domain_entities\pubspec.yaml
+@("name: domain_entities", "publish_to: none", "", "environment:", "  sdk: ^${sdk}", "", "dependencies:", "  equatable: ^2.0.7", "", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\domain_entities\pubspec.yaml
 
 foreach ($entity in $entities) {
     $entityName = $entity.Name
@@ -116,7 +120,7 @@ New-Item -Name analysis_options.yaml -ItemType file
 @("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\$nameRepo\analysis_options.yaml
 
 New-Item -Name pubspec.yaml -ItemType file
-@("name: $nameRepo", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0", "flutter: ", "  assets:", "    - lib/src/assets/data/data.json") | Add-Content -Path $path\packages\$nameRepo\pubspec.yaml
+@("name: $nameRepo", "publish_to: none", "", "environment:", "  sdk: ^${sdk}", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0", "flutter: ", "  assets:", "    - lib/src/assets/data/data.json") | Add-Content -Path $path\packages\$nameRepo\pubspec.yaml
 
 # Ajout des dossiers lib/src et du barrel
 mkdir lib
@@ -256,7 +260,7 @@ Set-Location component_library
 # Ajout du fichier analysis_options.yaml et pubspec.yaml
 @("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\component_library\analysis_options.yaml
 
-@("name: component_library", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\component_library\pubspec.yaml
+@("name: component_library", "publish_to: none", "", "environment:", "  sdk: ^${sdk}", "", "dependencies:", "  flutter:", "    sdk: flutter", "  domain_entities:", "    path: ../domain_entities", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\component_library\pubspec.yaml
 
 # Création du projet Example
 flutter create --platforms=web example
@@ -288,7 +292,7 @@ New-Item -Name analysis_options.yaml -ItemType file
 @("include: package:flutter_lints/flutter.yaml", "", "linter:", "  rules:") | Add-Content -Path $path\packages\features\$nameList\analysis_options.yaml
 
 New-Item -Name pubspec.yaml -ItemType file
-@("name: $nameList", "publish_to: none", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: ../../component_library", "  domain_entities:", "    path: ../../domain_entities", "  ${nameRepo}:", "    path: ../../${nameRepo}", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\features\$nameList\pubspec.yaml
+@("name: $nameList", "publish_to: none", "", "environment:", "  sdk: ^${sdk}", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: ../../component_library", "  domain_entities:", "    path: ../../domain_entities", "  ${nameRepo}:", "    path: ../../${nameRepo}", "dev_dependencies:", "  flutter_lints: ^4.0.0") | Add-Content -Path $path\packages\features\$nameList\pubspec.yaml
 
 flutter pub add uuid
 
@@ -367,7 +371,7 @@ New-Item -Name "screens.dart" -ItemType file
 @("export 'home_screen.dart';") | Add-Content -Path $path\packages\features\$nameList\lib\src\screens\screens.dart
 
 Set-Location $path
-@("name: $projectName", "description: A new Flutter project.", "", "publish_to: 'none'", "", "version: 1.0.0+1", "", "environment:", "  sdk: ^3.5.1", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: packages/component_library", "  ${nameList}:", "    path: packages/features/${nameList}", "  ${nameRepo}:", "    path: packages/${nameRepo}", "  cupertino_icons: ^1.0.8", "dev_dependencies:", "  flutter_test:", "    sdk: flutter", "  flutter_lints: ^4.0.0", "", "flutter:", "  uses-material-design: true") | Set-Content -Path $path\pubspec.yaml
+@("name: $projectName", "description: A new Flutter project.", "", "publish_to: 'none'", "", "version: 1.0.0+1", "", "environment:", "  sdk: ^${sdk}", "", "dependencies:", "  flutter:", "    sdk: flutter", "", "  component_library:", "    path: packages/component_library", "  ${nameList}:", "    path: packages/features/${nameList}", "  ${nameRepo}:", "    path: packages/${nameRepo}", "  cupertino_icons: ^1.0.8", "dev_dependencies:", "  flutter_test:", "    sdk: flutter", "  flutter_lints: ^4.0.0", "", "flutter:", "  uses-material-design: true") | Set-Content -Path $path\pubspec.yaml
 
 # Ajout du main
 Set-Location -Path $path\lib
